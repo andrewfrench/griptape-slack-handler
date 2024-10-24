@@ -1,8 +1,9 @@
 import logging
+import os
 
 from griptape.memory.structure.base_conversation_memory import BaseConversationMemory
-from griptape.tools import BaseTool, WebScraperTool
-from griptape.drivers import TrafilaturaWebScraperDriver
+from griptape.tools import BaseTool, WebScraperTool, DateTimeTool, CalculatorTool, WebSearchTool, GriptapeCloudKnowledgeBaseTool
+from griptape.drivers import TrafilaturaWebScraperDriver, DuckDuckGoWebSearchDriver
 from griptape.loaders import WebLoader
 from griptape.structures import Agent
 from griptape.tasks import PromptTask
@@ -23,8 +24,8 @@ def get_tools(message: str, *, dynamic: bool = False) -> list[BaseTool]:
         return [tool for tool, _ in tools_dict.values()]
 
     tools_descriptions = {
-        k: tool.activity_description(getattr(tool, activity_name))
-        for k, (tool, activity_name) in tools_dict.items()
+        k: description
+        for k, (_, description) in tools_dict.items()
     }
 
     agent = Agent(
@@ -44,7 +45,7 @@ def get_tools(message: str, *, dynamic: bool = False) -> list[BaseTool]:
         conversation_memory=ReadOnlyConversationMemory(),
     )
     output = agent.run(message, tools_descriptions).output.value
-    tool_names = output.split(", ") if output != "None" else []
+    tool_names = output.split(",") if output != "None" else []
     logger.info(f"Tools needed: {tool_names}")
     return [tools_dict[tool_name][0] for tool_name in tool_names]
 
@@ -57,11 +58,30 @@ def _init_tools_dict() -> dict[str, tuple[BaseTool, str]]:
     of the @activity decorated function to call.
     """
     # TODO: Add other tools here
+    # knowledge_base_tool = GriptapeCloudKnowledgeBaseTool(
+    #     api_key=os.getenv("GT_CLOUD_API_KEY", ""),
+    #     knowledge_base_id=os.getenv("GT_CLOUD_KNOWLEDGE_BASE_ID", ""),
+    # )
     return {
         "web_scraper": (
             WebScraperTool(
                 web_loader=WebLoader(web_scraper_driver=TrafilaturaWebScraperDriver()),
             ),
-            "get_content",
+            "Can be used to scrape information from webpages.",
         ),
+        "datetime": (
+            DateTimeTool(),
+            "Can be used to get information about dates and times.",
+        ),
+        "calculator": (CalculatorTool(), "Can be used to perform calculations."),
+        "web_search": (
+            WebSearchTool(
+                web_search_driver=DuckDuckGoWebSearchDriver(),
+            ),
+            "Can be used to search the web for information.",
+        ),
+        # "knowledge_base_tool": (
+        #     knowledge_base_tool,
+        #     knowledge_base_tool._get_knowledge_base_description(),
+        # ),
     }
