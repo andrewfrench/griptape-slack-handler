@@ -10,6 +10,8 @@ from griptape.tasks import PromptTask
 from griptape.rules import Rule
 from griptape.memory.structure import ConversationMemory, Run
 
+from proxycurl_client.tool import ProxycurlClient
+
 logger = logging.getLogger()
 
 
@@ -57,11 +59,6 @@ def _init_tools_dict() -> dict[str, tuple[BaseTool, str]]:
     and the value is a tuple containing the Tool object and the name
     of the @activity decorated function to call.
     """
-    # TODO: Add other tools here
-    # knowledge_base_tool = GriptapeCloudKnowledgeBaseTool(
-    #     api_key=os.getenv("GT_CLOUD_API_KEY", ""),
-    #     knowledge_base_id=os.getenv("GT_CLOUD_KNOWLEDGE_BASE_ID", ""),
-    # )
     return {
         "web_scraper": (
             WebScraperTool(
@@ -69,19 +66,16 @@ def _init_tools_dict() -> dict[str, tuple[BaseTool, str]]:
             ),
             "Can be used to scrape information from webpages.",
         ),
-        "datetime": (
-            DateTimeTool(),
-            "Can be used to get information about dates and times.",
-        ),
-        "calculator": (CalculatorTool(), "Can be used to perform calculations."),
         "web_search": (
             WebSearchTool(
                 web_search_driver=DuckDuckGoWebSearchDriver(),
             ),
             "Can be used to search the web for information.",
         ),
-        # "knowledge_base_tool": (
-        #     knowledge_base_tool,
-        #     knowledge_base_tool._get_knowledge_base_description(),
-        # ),
+        "linkedin_client": (
+            ProxycurlClient(
+                proxycurl_api_key=os.getenv("PROXYCURL_API_KEY"),
+            ),
+            "Can be used to consult Linkedin for information.",
+        )
     }
