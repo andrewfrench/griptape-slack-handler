@@ -1,13 +1,15 @@
+import os
 import logging
 
 from griptape.memory.structure.base_conversation_memory import BaseConversationMemory
-from griptape.tools import BaseTool, WebScraperTool
-from griptape.drivers import TrafilaturaWebScraperDriver
+from griptape.tools import BaseTool, WebScraperTool, WebSearch
+from griptape.drivers import TrafilaturaWebScraperDriver, DuckDuckGoWebSearchDriver
 from griptape.loaders import WebLoader
 from griptape.structures import Agent
 from griptape.tasks import PromptTask
 from griptape.rules import Rule
 from griptape.memory.structure import ConversationMemory, Run
+from proxycurl_client.tool import ProxycurlClient
 
 logger = logging.getLogger()
 
@@ -56,12 +58,23 @@ def _init_tools_dict() -> dict[str, tuple[BaseTool, str]]:
     and the value is a tuple containing the Tool object and the name
     of the @activity decorated function to call.
     """
-    # TODO: Add other tools here
     return {
         "web_scraper": (
             WebScraperTool(
                 web_loader=WebLoader(web_scraper_driver=TrafilaturaWebScraperDriver()),
             ),
             "get_content",
+        ),
+        "linkedin_client": (
+            ProxycurlClient(
+                proxycurl_api_key=os.getenv("PROXYCURL_API_KEY"),
+            ),
+            "get_company",
+        ),
+        "web_search_client": (
+            WebSearch(
+                web_search_driver=DuckDuckGoWebSearchDriver(),
+            ),
+            "search"
         ),
     }
