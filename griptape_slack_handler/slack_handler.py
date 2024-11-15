@@ -25,19 +25,24 @@ app: App = App(
 
 @app.event("message")
 def message(body: dict, payload: dict, say: Say, client: WebClient):
-    # only respond to direct messages, otherwise the bot
-    # will respond to every message in every channel it is in
-    if payload.get("channel_type") == "im":
-        respond_in_thread(body, payload, say, client)
-    elif payload.get("subtype") != "bot_message":
-        # add the message to the cloud thread
-        # so the bot can use it for context when
-        # responding to future messages in a thread
+    # filter out messages from the bot itself to prevent infinite loops
+    bot_user_id = client.auth_test()["user_id"]
+    if payload.get("user") == bot_user_id:
+        return
+
+    # filter for messages that are not new user signups.
+    # add these to thread to populate conversation history
+    # to allow for thread conversations.
+    if "New signup by" not in payload.get("text"):
         try_add_to_thread(
             payload["text"],
             thread_alias=payload.get("thread_ts", payload["ts"]),
             user_id=payload["user"],
         )
+
+        return
+
+    respond_in_thread(body, payload, say, client)
 
 
 @app.event("app_mention")
