@@ -52,3 +52,5 @@ __azurite_db*__.json
 test_data
 test.py
 .vscode
+
+.idea/
